@@ -48,6 +48,7 @@ pub fn module(lua: Lua) -> LuaResult<LuaTable> {
         .with_async_function("serializePlace", serialize_place)?
         .with_async_function("serializeModel", serialize_model)?
         .with_function("getAuthCookie", get_auth_cookie)?
+        .with_function("getByteSize", get_byte_size)?
         .with_function("getReflectionDatabase", get_reflection_database)?
         .with_function("implementProperty", implement_property)?
         .with_function("implementMethod", implement_method)?
@@ -56,8 +57,6 @@ pub fn module(lua: Lua) -> LuaResult<LuaTable> {
         .with_function("studioPluginPath", studio_plugin_path)?
         .with_function("studioBuiltinPluginPath", studio_builtin_plugin_path)?
         .build_readonly()?;
-
-    implement_byte_size_for_all_classes(&lua, ())?;
 
     Ok(table)
 }
@@ -186,58 +185,23 @@ fn studio_builtin_plugin_path(_: &Lua, _: ()) -> LuaResult<String> {
         .map_err(LuaError::external)
 }
 
-fn implement_byte_size_property(lua: &Lua, (class_name,): (String,)) -> LuaResult<()> {
-    let property_name = "ByteSize";
+fn get_byte_size(_lua: &Lua, instance: LuaUserDataRef<Instance>) -> LuaResult<u64> {
+    let instance = *instance;
 
-    let getter = lua.create_function(move |_lua, instance: LuaUserDataRef<Instance>| {
-        let instance = *instance;
-
-        let doc = if instance.get_class_name() == "DataModel" {
-            match lune_roblox::document::Document::from_data_model_instance(instance) {
-                Ok(doc) => doc,
-                Err(_) => return Ok(0u64),
-            }
-        } else {
-            match lune_roblox::document::Document::from_instance_array(vec![instance]) {
-                Ok(doc) => doc,
-                Err(_) => return Ok(0u64),
-            }
-        };
-
-        match doc.to_bytes_with_format(lune_roblox::document::DocumentFormat::Binary) {
-            Ok(bytes) => Ok(bytes.len() as u64),
-            Err(_) => Ok(0u64),
+    let doc = if instance.get_class_name() == "DataModel" {
+        match lune_roblox::document::Document::from_data_model_instance(instance) {
+            Ok(doc) => doc,
+            Err(_) => return Ok(0u64),
         }
-    })?;
-
-    let setter = lua.create_function(move |_, _: LuaMultiValue| {
-        Err::<(), _>(LuaError::runtime(format!(
-            "Property '{}' is read-only",
-            property_name
-        )))
-    })?;
-
-    InstanceRegistry::insert_property_getter(lua, &class_name, property_name, getter)
-        .into_lua_err()?;
-    InstanceRegistry::insert_property_setter(lua, &class_name, property_name, setter)
-        .into_lua_err()?;
-
-    Ok(())
-}
-
-fn implement_byte_size_for_all_classes(lua: &Lua, _: ()) -> LuaResult<()> {
-    let db = lune_roblox::reflection::Database::new();
-
-    for class_name in db.get_class_names() {
-        let class_name_for_call = class_name.clone();
-        let class_name_for_error = class_name.clone();
-        if let Err(e) = implement_byte_size_property(lua, (class_name_for_call,)) {
-            eprintln!(
-                "Failed to implement ByteSize for class {}: {}",
-                class_name_for_error, e
-            );
+    } else {
+        match lune_roblox::document::Document::from_instance_array(vec![instance]) {
+            Ok(doc) => doc,
+            Err(_) => return Ok(0u64),
         }
+    };
+
+    match doc.to_bytes_with_format(lune_roblox::document::DocumentFormat::Binary) {
+        Ok(bytes) => Ok(bytes.len() as u64),
+        Err(_) => Ok(0u64),
     }
-
-    Ok(())
 }

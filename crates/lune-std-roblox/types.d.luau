@@ -134,7 +134,6 @@ type InstanceProperties = {
 	Parent: Instance?,
 	ClassName: string,
 	Name: string,
-	ByteSize: number,
 	-- FIXME: This breaks intellisense, but we need some way to access
 	-- instance properties without casting the entire instance to any...
 	-- [string]: any,
@@ -594,6 +593,27 @@ end
 	```
 ]=]
 function roblox.studioBuiltinPluginPath(): string
+	return nil :: any
+end
+
+--[=[
+	@within Roblox
+	@tag must_use
+
+	Gets the byte size of an instance when serialized to binary.
+
+	### Example usage
+
+	```lua
+	local part = Instance.new("Part")
+	local size = roblox.getByteSize(part)
+	print("Part will take", size, "bytes when serialized")
+	```
+
+	@param instance The instance to get the byte size for
+	@return The number of bytes the instance would take when serialized
+]=]
+function roblox.getByteSize(instance: Instance): number
 	return nil :: any
 end
 

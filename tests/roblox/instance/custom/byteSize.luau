@@ -1,38 +1,22 @@
 local roblox = require("@lune/roblox") :: any
 local Instance = roblox.Instance
 
--- Basic ByteSize property tests
+-- Basic ByteSize function tests
 do
 	local part = Instance.new("Part")
 
-	assert(part.ByteSize ~= nil, "ByteSize property should exist on Part")
-	assert(type(part.ByteSize) == "number", "ByteSize should be a number")
-	assert(part.ByteSize > 0, "ByteSize should be greater than 0")
+	local size = roblox.getByteSize(part)
+	assert(size ~= nil, "getByteSize should return a value for Part")
+	assert(type(size) == "number", "getByteSize should return a number")
+	assert(size > 0, "getByteSize should return a value greater than 0")
 
 	local folder = Instance.new("Folder")
 	local script = Instance.new("Script")
 	local stringValue = Instance.new("StringValue")
 
-	assert(folder.ByteSize > 0, "Folder should have ByteSize > 0")
-	assert(script.ByteSize > 0, "Script should have ByteSize > 0")
-	assert(stringValue.ByteSize > 0, "StringValue should have ByteSize > 0")
-end
-
--- Read-only property test
-do
-	local part = Instance.new("Part")
-	local success, err = pcall(function()
-		part.ByteSize = 100
-	end)
-
-	assert(not success, "ByteSize property should be read-only")
-	local errorStr = tostring(err)
-	assert(
-		string.find(errorStr, "Property")
-			and string.find(errorStr, "read")
-			and string.find(errorStr, "only"),
-		"Error should indicate property is read-only"
-	)
+	assert(roblox.getByteSize(folder) > 0, "Folder should have ByteSize > 0")
+	assert(roblox.getByteSize(script) > 0, "Script should have ByteSize > 0")
+	assert(roblox.getByteSize(stringValue) > 0, "StringValue should have ByteSize > 0")
 end
 
 -- Parent-child relationship tests
@@ -48,9 +32,9 @@ do
 	childScript.Name = "ChildScript"
 	childScript.Parent = model
 
-	local modelSize = model.ByteSize
-	local childPartSize = childPart.ByteSize
-	local childScriptSize = childScript.ByteSize
+	local modelSize = roblox.getByteSize(model)
+	local childPartSize = roblox.getByteSize(childPart)
+	local childScriptSize = roblox.getByteSize(childScript)
 
 	assert(modelSize > childPartSize, "Model size should include children")
 	assert(modelSize > childScriptSize, "Model size should include children")
@@ -70,7 +54,10 @@ do
 	local simplePart = Instance.new("Part")
 	simplePart.Name = "SimplePart"
 
-	assert(complexPart.ByteSize > simplePart.ByteSize, "Complex part should have larger ByteSize")
+	assert(
+		roblox.getByteSize(complexPart) > roblox.getByteSize(simplePart),
+		"Complex part should have larger ByteSize"
+	)
 end
 
 -- Attributes comparison
@@ -85,7 +72,7 @@ do
 	partWithoutAttributes.Name = "PartWithoutAttributes"
 
 	assert(
-		partWithAttributes.ByteSize > partWithoutAttributes.ByteSize,
+		roblox.getByteSize(partWithAttributes) > roblox.getByteSize(partWithoutAttributes),
 		"Part with attributes should have larger ByteSize"
 	)
 end
@@ -102,7 +89,7 @@ do
 	partWithoutTags.Name = "PartWithoutTags"
 
 	assert(
-		partWithTags.ByteSize > partWithoutTags.ByteSize,
+		roblox.getByteSize(partWithTags) > roblox.getByteSize(partWithoutTags),
 		"Part with tags should have larger ByteSize"
 	)
 end
@@ -112,10 +99,10 @@ do
 	local testPart = Instance.new("Part")
 	testPart.Name = "TestPart"
 
-	local size1 = testPart.ByteSize
-	local size2 = testPart.ByteSize
+	local size1 = roblox.getByteSize(testPart)
+	local size2 = roblox.getByteSize(testPart)
 
-	assert(size1 == size2, "ByteSize should be consistent for the same instance")
+	assert(size1 == size2, "getByteSize should be consistent for the same instance")
 end
 
 -- Multiple instance types test
@@ -146,12 +133,12 @@ do
 
 		if success then
 			local success2, size = pcall(function()
-				return instance.ByteSize
+				return roblox.getByteSize(instance)
 			end)
 
-			assert(success2, "ByteSize should work for " .. className)
-			assert(type(size) == "number", "ByteSize should be a number for " .. className)
-			assert(size > 0, "ByteSize should be > 0 for " .. className)
+			assert(success2, "getByteSize should work for " .. className)
+			assert(type(size) == "number", "getByteSize should return a number for " .. className)
+			assert(size > 0, "getByteSize should return a value > 0 for " .. className)
 		end
 	end
 end
@@ -173,10 +160,10 @@ do
 	level3.Name = "Level3"
 	level3.Parent = level2
 
-	local rootSize = root.ByteSize
-	local level1Size = level1.ByteSize
-	local level2Size = level2.ByteSize
-	local level3Size = level3.ByteSize
+	local rootSize = roblox.getByteSize(root)
+	local level1Size = roblox.getByteSize(level1)
+	local level2Size = roblox.getByteSize(level2)
+	local level3Size = roblox.getByteSize(level3)
 
 	assert(rootSize > level1Size, "Root size should include all descendants")
 	assert(level1Size > level2Size, "Level1 size should include its descendants")
@@ -188,8 +175,8 @@ do
 	local emptyFolder = Instance.new("Folder")
 	local emptyPart = Instance.new("Part")
 
-	assert(emptyFolder.ByteSize > 0, "Empty folder should have ByteSize > 0")
-	assert(emptyPart.ByteSize > 0, "Empty part should have ByteSize > 0")
+	assert(roblox.getByteSize(emptyFolder) > 0, "Empty folder should have ByteSize > 0")
+	assert(roblox.getByteSize(emptyPart) > 0, "Empty part should have ByteSize > 0")
 end
 
 -- Long name test
@@ -200,9 +187,9 @@ do
 
 	local emptyPart = Instance.new("Part")
 
-	assert(partWithLongName.ByteSize > 0, "Part with long name should have ByteSize > 0")
+	assert(roblox.getByteSize(partWithLongName) > 0, "Part with long name should have ByteSize > 0")
 	assert(
-		partWithLongName.ByteSize > emptyPart.ByteSize,
+		roblox.getByteSize(partWithLongName) > roblox.getByteSize(emptyPart),
 		"Part with long name should have larger ByteSize"
 	)
 end
@@ -217,11 +204,11 @@ do
 	local emptyPart = Instance.new("Part")
 
 	assert(
-		partWithManyAttributes.ByteSize > 0,
+		roblox.getByteSize(partWithManyAttributes) > 0,
 		"Part with many attributes should have ByteSize > 0"
 	)
 	assert(
-		partWithManyAttributes.ByteSize > emptyPart.ByteSize,
+		roblox.getByteSize(partWithManyAttributes) > roblox.getByteSize(emptyPart),
 		"Part with many attributes should have larger ByteSize"
 	)
 end
@@ -235,16 +222,16 @@ do
 
 	local emptyPart = Instance.new("Part")
 
-	assert(partWithManyTags.ByteSize > 0, "Part with many tags should have ByteSize > 0")
+	assert(roblox.getByteSize(partWithManyTags) > 0, "Part with many tags should have ByteSize > 0")
 	assert(
-		partWithManyTags.ByteSize > emptyPart.ByteSize,
+		roblox.getByteSize(partWithManyTags) > roblox.getByteSize(emptyPart),
 		"Part with many tags should have larger ByteSize"
 	)
 end
 
 -- Deep nesting test
 do
-	local function createDeepNest(depth: number)
+	local function createDeepNest(depth)
 		local current = Instance.new("Folder")
 		current.Name = "Level" .. depth
 
@@ -257,7 +244,7 @@ do
 	end
 
 	local deepNest = createDeepNest(10)
-	assert(deepNest.ByteSize > 0, "Deeply nested instance should have ByteSize > 0")
+	assert(roblox.getByteSize(deepNest) > 0, "Deeply nested instance should have ByteSize > 0")
 end
 
 -- Circular reference test
@@ -276,7 +263,7 @@ do
 	objValue2.Parent = circular2
 
 	local success, size = pcall(function()
-		return circular1.ByteSize
+		return roblox.getByteSize(circular1)
 	end)
 
 	assert(success, "Circular reference should not cause infinite loop")
@@ -293,9 +280,12 @@ do
 
 	local emptyPart = Instance.new("Part")
 
-	assert(partWithLargeString.ByteSize > 0, "Part with large string should have ByteSize > 0")
 	assert(
-		partWithLargeString.ByteSize > emptyPart.ByteSize,
+		roblox.getByteSize(partWithLargeString) > 0,
+		"Part with large string should have ByteSize > 0"
+	)
+	assert(
+		roblox.getByteSize(partWithLargeString) > roblox.getByteSize(emptyPart),
 		"Part with large string should have larger ByteSize"
 	)
 end
@@ -309,7 +299,7 @@ do
 	partWithExtremeNumbers:SetAttribute("PositiveInfinity", math.huge)
 
 	assert(
-		partWithExtremeNumbers.ByteSize > 0,
+		roblox.getByteSize(partWithExtremeNumbers) > 0,
 		"Part with extreme numbers should have ByteSize > 0"
 	)
 end
@@ -321,7 +311,7 @@ do
 	partWithSpecialChars:SetAttribute("SpecialValue", 'Value with \n newlines \t tabs and "quotes"')
 
 	assert(
-		partWithSpecialChars.ByteSize > 0,
+		roblox.getByteSize(partWithSpecialChars) > 0,
 		"Part with special characters should have ByteSize > 0"
 	)
 end
@@ -329,13 +319,13 @@ end
 -- Modification test
 do
 	local part = Instance.new("Part")
-	local originalSize = part.ByteSize
+	local originalSize = roblox.getByteSize(part)
 
 	part.Name = "ModifiedPart"
 	part:SetAttribute("NewAttribute", "NewValue")
 	part:AddTag("NewTag")
 
-	local modifiedSize = part.ByteSize
+	local modifiedSize = roblox.getByteSize(part)
 
 	assert(modifiedSize > originalSize, "Modified part should have larger ByteSize")
 	assert(modifiedSize > 0, "Modified part should have ByteSize > 0")
@@ -347,11 +337,11 @@ do
 	local sizes = {}
 
 	for i = 1, 10 do
-		sizes[i] = testPart.ByteSize
+		sizes[i] = roblox.getByteSize(testPart)
 	end
 
 	for i = 2, 10 do
-		assert(sizes[i] == sizes[1], "ByteSize should be consistent across multiple accesses")
+		assert(sizes[i] == sizes[1], "getByteSize should be consistent across multiple accesses")
 	end
 end
 
@@ -363,10 +353,10 @@ do
 
 	local clonedPart = originalPart:Clone()
 
-	assert(originalPart.ByteSize > 0, "Original part should have ByteSize > 0")
-	assert(clonedPart.ByteSize > 0, "Cloned part should have ByteSize > 0")
+	assert(roblox.getByteSize(originalPart) > 0, "Original part should have ByteSize > 0")
+	assert(roblox.getByteSize(clonedPart) > 0, "Cloned part should have ByteSize > 0")
 	assert(
-		originalPart.ByteSize == clonedPart.ByteSize,
+		roblox.getByteSize(originalPart) == roblox.getByteSize(clonedPart),
 		"Cloned part should have same ByteSize as original"
 	)
 end
