@@ -41,7 +41,7 @@ pub fn module(lua: Lua) -> LuaResult<LuaTable> {
         roblox_constants.push(pair?);
     }
 
-    let table = TableBuilder::new(lua.clone())?
+    TableBuilder::new(lua)?
         .with_values(roblox_constants)?
         .with_async_function("deserializePlace", deserialize_place)?
         .with_async_function("deserializeModel", deserialize_model)?
@@ -56,9 +56,7 @@ pub fn module(lua: Lua) -> LuaResult<LuaTable> {
         .with_function("studioContentPath", studio_content_path)?
         .with_function("studioPluginPath", studio_plugin_path)?
         .with_function("studioBuiltinPluginPath", studio_builtin_plugin_path)?
-        .build_readonly()?;
-
-    Ok(table)
+        .build_readonly()
 }
 
 async fn deserialize_place(lua: Lua, contents: LuaString) -> LuaResult<LuaValue> {
