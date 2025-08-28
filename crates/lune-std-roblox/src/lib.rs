@@ -121,6 +121,27 @@ fn get_auth_cookie(_: &Lua, raw: Option<bool>) -> LuaResult<Option<String>> {
     }
 }
 
+fn get_byte_size(_lua: &Lua, instance: LuaUserDataRef<Instance>) -> LuaResult<u64> {
+    let instance = *instance;
+
+    let doc = if instance.get_class_name() == "DataModel" {
+        match lune_roblox::document::Document::from_data_model_instance(instance) {
+            Ok(doc) => doc,
+            Err(_) => return Ok(0u64),
+        }
+    } else {
+        match lune_roblox::document::Document::from_instance_array(vec![instance]) {
+            Ok(doc) => doc,
+            Err(_) => return Ok(0u64),
+        }
+    };
+
+    match doc.to_bytes_with_format(lune_roblox::document::DocumentFormat::Binary) {
+        Ok(bytes) => Ok(bytes.len() as u64),
+        Err(_) => Ok(0u64),
+    }
+}
+
 fn get_reflection_database(_: &Lua, _: ()) -> LuaResult<ReflectionDatabase> {
     Ok(*REFLECTION_DATABASE.get_or_init(ReflectionDatabase::new))
 }
@@ -181,25 +202,4 @@ fn studio_builtin_plugin_path(_: &Lua, _: ()) -> LuaResult<String> {
     RobloxStudio::locate()
         .map(|rs| rs.built_in_plugins_path().display().to_string())
         .map_err(LuaError::external)
-}
-
-fn get_byte_size(_lua: &Lua, instance: LuaUserDataRef<Instance>) -> LuaResult<u64> {
-    let instance = *instance;
-
-    let doc = if instance.get_class_name() == "DataModel" {
-        match lune_roblox::document::Document::from_data_model_instance(instance) {
-            Ok(doc) => doc,
-            Err(_) => return Ok(0u64),
-        }
-    } else {
-        match lune_roblox::document::Document::from_instance_array(vec![instance]) {
-            Ok(doc) => doc,
-            Err(_) => return Ok(0u64),
-        }
-    };
-
-    match doc.to_bytes_with_format(lune_roblox::document::DocumentFormat::Binary) {
-        Ok(bytes) => Ok(bytes.len() as u64),
-        Err(_) => Ok(0u64),
-    }
 }
