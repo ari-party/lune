@@ -244,7 +244,7 @@ end
 
 -- Deep nesting test
 do
-	local function createDeepNest(depth)
+	local function createDeepNest(depth: number)
 		local current = Instance.new("Folder")
 		current.Name = "Level" .. depth
 
