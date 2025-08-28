@@ -134,6 +134,7 @@ type InstanceProperties = {
 	Parent: Instance?,
 	ClassName: string,
 	Name: string,
+	ByteSize: number,
 	-- FIXME: This breaks intellisense, but we need some way to access
 	-- instance properties without casting the entire instance to any...
 	-- [string]: any,
@@ -183,7 +184,10 @@ export type DataModelMetatable = {
 
 export type DataModel =
 	Instance
-	& typeof(setmetatable((nil :: any) :: DataModelProperties, (nil :: any) :: { __index: DataModelMetatable }))
+	& typeof(setmetatable(
+		(nil :: any) :: DataModelProperties,
+		(nil :: any) :: { __index: DataModelMetatable }
+	))
 
 --[=[
 	@class Roblox
@@ -393,6 +397,49 @@ end
 --[=[
 	@within Roblox
 
+	Implements a method for all instances of the given `className`.
+
+	This takes into account class hierarchies, so implementing a method
+	for the `BasePart` class will also implement it for `Part` and others,
+	unless a more specific implementation is added to the `Part` class directly.
+
+	### Behavior
+
+	The given `callback` will be called every time the method is called,
+	and will receive the instance it was called on as its first argument.
+	The remaining arguments will be what the caller passed to the method, and
+	all values returned from the callback will then be returned to the caller.
+
+	### Example usage
+
+	```lua
+	local roblox = require("@lune/roblox")
+
+	local part = roblox.Instance.new("Part")
+
+	roblox.implementMethod("BasePart", "TestMethod", function(instance, ...)
+	    print("Called TestMethod on instance", instance, "with", ...)
+	end)
+
+	part:TestMethod("Hello", "world!")
+	--> Called TestMethod on instance Part with Hello, world!
+	```
+
+	@param className The class to implement the method for.
+	@param methodName The name of the method to implement.
+	@param callback The function which will be called when the method is called.
+]=]
+function roblox.implementMethod(
+	className: string,
+	methodName: string,
+	callback: (instance: Instance, ...any) -> ...any
+)
+	return nil :: any
+end
+
+--[=[
+	@within Roblox
+
 	Implements a property for all instances of the given `className`.
 
 	This takes into account class hierarchies, so implementing a property
@@ -451,45 +498,6 @@ function roblox.implementProperty<T>(
 	getter: (instance: Instance) -> T,
 	setter: ((instance: Instance, value: T) -> ())?
 )
-	return nil :: any
-end
-
---[=[
-	@within Roblox
-
-	Implements a method for all instances of the given `className`.
-
-	This takes into account class hierarchies, so implementing a method
-	for the `BasePart` class will also implement it for `Part` and others,
-	unless a more specific implementation is added to the `Part` class directly.
-
-	### Behavior
-
-	The given `callback` will be called every time the method is called,
-	and will receive the instance it was called on as its first argument.
-	The remaining arguments will be what the caller passed to the method, and
-	all values returned from the callback will then be returned to the caller.
-
-	### Example usage
-
-	```lua
-	local roblox = require("@lune/roblox")
-
-	local part = roblox.Instance.new("Part")
-
-	roblox.implementMethod("BasePart", "TestMethod", function(instance, ...)
-	    print("Called TestMethod on instance", instance, "with", ...)
-	end)
-
-	part:TestMethod("Hello", "world!")
-	--> Called TestMethod on instance Part with Hello, world!
-	```
-
-	@param className The class to implement the method for.
-	@param methodName The name of the method to implement.
-	@param callback The function which will be called when the method is called.
-]=]
-function roblox.implementMethod(className: string, methodName: string, callback: (instance: Instance, ...any) -> ...any)
 	return nil :: any
 end
 
